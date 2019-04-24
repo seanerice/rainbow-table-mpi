@@ -1,28 +1,29 @@
 #include "SubstringIterator.h"
 
-SubstringIterator::SubstringIterator(string str, int i_start, int i_stop) {
-    initSubstringIterator(str, i_start, i_stop);
+SubstringIterator::SubstringIterator(string str, int min_length, int max_length) {
+    initSubstringIterator(str, min_length, max_length);
 }
 
-void SubstringIterator::initSubstringIterator(string str, int i_start, int i_stop) {
+void SubstringIterator::initSubstringIterator(string str, int min_length, int max_length) {
     this->str = str;
-    start = i_start;
-    stop = i_stop;
-    from = start;
-    to = 1 - 1;
+    this->min_length = min_length;
+    this->max_length = max_length;
+    stop = str.length() - min_length;
+    from = 0;
+    to = min_length - 1; // will be incremented in nextSubstring()
     hasNextVal = true;
 }
 
 void SubstringIterator::initSubstringIterator(string str) {
-    SubstringIterator::initSubstringIterator(str, 0, str.length() - 1);
+    SubstringIterator::initSubstringIterator(str, 1, str.length());
 }
 
 string SubstringIterator::nextSubstring() {
-    if (from < stop + 1) {
-        if (to <= stop - from) {
+    if (from < stop) {
+        if (to < max_length) {
             to++;
         } else {
-            to = 1;
+            to = min_length;
             from++;
         }
     }

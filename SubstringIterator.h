@@ -13,13 +13,13 @@ using namespace std;
    ============================================================
    ----------------------------Info----------------------------
    ============================================================
-   Generates unique substrings within optional indices
+   Generates unique substrings within specified length [optional]
 
    ============================================================
    -------------------------Sample-Use-------------------------
    ============================================================
 
-   SubstringIterator si("abcdefghij"); // a-j
+   SubstringIterator si("abcdefghij");
    while (si.hasNext()) {
        cout << si.nextSubstring() << endl;
    }
@@ -28,7 +28,7 @@ using namespace std;
    -----------------------------or-----------------------------
    ============================================================
 
-   SubstringIterator si("abcdefghij",3,7); // d-h
+   SubstringIterator si("abcdefghij",3,7);
    while (si.hasNext()) {
        cout << si.nextSubstring() << endl;
    }
@@ -38,12 +38,12 @@ using namespace std;
    ============================================================
 
    SubstringIterator si;
-   si.initSubstringIterator("abcdefghij"); // a-j
+   si.initSubstringIterator("abcdefghij");
    while (si.hasNext()) {
        cout << si.nextSubstring() << endl;
    }
 
-   si.initSubstringIterator("abcdefghij",3,7); // d-h
+   si.initSubstringIterator("abcdefghij",3,7);
    while (si.hasNext()) {
        cout << si.nextSubstring() << endl;
    }
@@ -61,26 +61,26 @@ public:
     SubstringIterator() : SubstringIterator("", 1, 0) {};
 
     /**
-     * Initialize iterator, generating substrings from str, ranging from i_start to i_stop
+     * Initialize iterator, generating substrings from str, ranging from min_length to max_length
      * @param str string
-     * @param i_start start index
-     * @param i_stop stop index
+     * @param min_length start index
+     * @param max_length stop index
      */
-    SubstringIterator(string str, int i_start, int i_stop);
+    SubstringIterator(string str, int min_length, int max_length);
 
     /**
      * Initialize iterator, generating all substrings from str
      * @param str string
      */
-    SubstringIterator(string str) : SubstringIterator(str, 0, str.length() - 1) {};
+    SubstringIterator(string str) : SubstringIterator(str, 1, str.length()) {};
 
     /**
-     * Reinitializes iterator, generating substrings from str, ranging from i_start to i_stop
+     * Reinitializes iterator, generating substrings from str, within min_length - max_length
      * @param str string
-     * @param i_start start index
-     * @param i_stop stop index
+     * @param min_length
+     * @param max_length
      */
-    void initSubstringIterator(string str, int i_start, int i_stop);
+    void initSubstringIterator(string str, int min_length, int max_length);
 
     /**
      * Reinitialize iterator, generating all substrings from str
@@ -89,8 +89,8 @@ public:
     void initSubstringIterator(string str);
 
     /**
-     * @return next generated substring
-     */
+   * @return next generated substring within the length
+   */
     string nextSubstring();
 
     /**
@@ -100,10 +100,11 @@ public:
 
 private:
     string str;
-    int start;
     int stop;
     int from;
     int to;
+    int min_length;
+    int max_length;
     bool hasNextVal;
 };
 

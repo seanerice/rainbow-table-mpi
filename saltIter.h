@@ -24,9 +24,10 @@ vector<string> applySalts(vector<string> words, vector<string> salts, int saltLe
 	if (saltLength == 0) return words;
 	vector<string> saltedPasswords = {};
 	for (vector<string>::iterator itr = words.begin(); itr != words.end(); itr++) {
-		for(vector<string::iterator itr2 = salts.begin(); itr2 != salts.end(); itr2++) {
-			string saltedPassword = *itr2.substring(0,pivot) + *itr + *itr2.substring(pivot,saltLength);
+		for(vector<string>::iterator itr2 = salts.begin(); itr2 != salts.end(); itr2++) {
+			string saltedPassword = itr2->substr(0,pivot) + *itr + itr2->substr(pivot,saltLength);
 			saltedPasswords.push_back(saltedPassword);
+			cout << saltedPassword << '\n';
 		}
 	}
     return saltedPasswords;

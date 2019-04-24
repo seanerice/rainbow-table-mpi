@@ -3,3 +3,5 @@ sync_run_mastiff.sh
 .vscode/*
 assignment4-5
 heatmap_out.ibin
+*.sw*
+imVerySalty.cpp

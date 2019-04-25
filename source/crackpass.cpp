@@ -104,6 +104,8 @@ struct hash_match {
 	int userid;
 	char hashed_pwd[100];
 	char plain_pwd[10];
+
+	hash_match() : send_rank(-1), matched(0), userid(-1) {}
 };
 
 struct acct_row {
@@ -210,12 +212,15 @@ int main(int argc, char *argv[]) {
 		// Generate new hash
 		string hashed_pwd = si.nextSubstring();
 
-		// Copy buff_in and new hash to buff_out
+		// Copy buff_in to buff_out
 		for (int i = 0; i < mpi_ranks; i++) {
 			rank_match_buf_out[i] = rank_match_buf_in[i];
 		}
-		rank_match_buf_out[mpi_myrank].hashed_pwd[0] = 0;
-		strcpy(rank_match_buf_out[mpi_myrank].hashed_pwd, hashed_pwd.c_str());
+
+		// Make new hash match in buff_out for this rank
+		hash_match hm;
+		strcpy(hm.hashed_pwd, hashed_pwd.c_str());
+		rank_match_buf_out[mpi_myrank] = hm;
 
 		if (mpi_myrank == 0) 
 			printf("Rank: %d, row: %d, hash: %s\n", mpi_myrank, rank_match_buf_out[0].userid, rank_match_buf_out[0].hashed_pwd);
@@ -224,11 +229,11 @@ int main(int argc, char *argv[]) {
 		// printf("Rank %d send to rank %d\n", mpi_myrank, mod(mpi_myrank + 1, mpi_ranks));
 		send_hash_matches(rank_match_buf_out, mpi_ranks, mod(mpi_myrank + 1, mpi_ranks));
 		recv_hash_matches(rank_match_buf_in, mpi_ranks, mod(mpi_myrank - 1, mpi_ranks));
+		MPI_Barrier(MPI_COMM_WORLD);
 
 		if (mpi_myrank == 1)
 			printf("Rank: %d, row: %d, hash: %s\n", mpi_myrank, rank_match_buf_in[0].userid, rank_match_buf_in[0].hashed_pwd);
 
-		MPI_Barrier(MPI_COMM_WORLD);
 	}
 	
     /* Primary execution:
@@ -432,7 +437,7 @@ void itoa(int value, char *str, int base) {
 
 void send_hash_matches(hash_match *hm, int num, int r_rank) {
     MPI_Request req1;
-    MPI_Isend(&hm, num, mpi_hash_match, r_rank, 0, MPI_COMM_WORLD, &req1);
+    MPI_Isend(hm, num, mpi_hash_match, r_rank, 0, MPI_COMM_WORLD, &req1);
 }
 
 void recv_hash_matches(hash_match *hm, int num, int s_rank) {

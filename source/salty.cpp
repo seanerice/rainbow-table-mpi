@@ -16,7 +16,7 @@ vector<string> generateSalts(vector<char> charList, int saltLength) {
     return salts;
 }
 
-// concatenates salts to strings according to provided pivot
+// concatenates  salts to strings according to provided pivot
 string applySalt(string word, string salt, int saltLength, int pivot) {
     string saltedPassword = salt.substr(0,pivot) + word + salt.substr(pivot,salt.length());
     return saltedPassword;

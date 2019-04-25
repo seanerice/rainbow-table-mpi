@@ -1,7 +1,7 @@
 #include <iostream>
 #include <ostream>
 #include <vector>
-#include "source/prod.h"
+#include "prod.h"
 #include "picosha2.h"
 
 vector<string> generateSalts(vector<char> charList, int saltLength);

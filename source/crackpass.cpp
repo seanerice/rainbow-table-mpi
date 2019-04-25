@@ -27,6 +27,9 @@
 #include <string>
 #include <iostream> 
 #include <iterator> 
+#include <vector>
+#include "salty.h"
+#include "SubstringIterator.h"
 
 
 #include<mpi.h>
@@ -54,6 +57,7 @@ unsigned long long g_end_cycles = 0;
 int mpi_myrank;
 int mpi_ranks;
 MPI_Datatype mpi_hash_match;
+vector<char> alphanumeric = {'a', 'b', 'c', '1', '2', '3'};
 
 struct prog_params {
 	int uni_rows;
@@ -95,10 +99,10 @@ void strreverse(char *begin, char *end);
 void itoa(int value, char *str, int base);
 
 void init_act_hashes(map<string, int> &act_hashes) {
-	act_hashes.insert(pair<string, int>("abcd", 1));
-	act_hashes.insert(pair<string, int>("efgh", 2));
-	act_hashes.insert(pair<string, int>("ijkl", 3));
-	act_hashes.insert(pair<string, int>("mnop", 4));
+	act_hashes.insert(pair<string, int>("77ecb9c86001b69287f0fc210869d4db3c013067230a87f6fbf96adf65cc4030", 1));
+	act_hashes.insert(pair<string, int>("a1b48c37ac21232a6ef80baae25e080309c6b64330722bc06d61d9045045a37b", 2));
+	act_hashes.insert(pair<string, int>("ef6d4e20906b5aa18241941b23ff3e95ba7dda12758667db93c3f4e3b6410e8c", 3));
+	act_hashes.insert(pair<string, int>("e2e191cc90b5e4805e7137941a7b227779d3e11213b554af2d96055fe4b27f4d", 4));
 }
 
 void init_hash_match_type() {
@@ -158,7 +162,45 @@ int main(int argc, char *argv[]) {
 		cout << itr->first << " " << itr->second << endl;
 	}
 
-	MPI_Barrier(MPI_COMM_WORLD);
+    /* Test substring iterator */
+    vector<int> pivots {0, 1, 2, 3}; // to be replaced by args
+    vector<int> saltLengths {0, 1, 2, 3}; // to be replaced by args
+    vector<string> hashed = {}; 
+
+    /* Test loop */
+    SubstringIterator si;
+    vector<string> words = {"fuck", "shit", "bitch", "young", "sheck", "wes", "and", "im", "getting", "really", "rich" };
+	// words
+    for (vector<string>::iterator itr = words.begin(); itr != words.end(); itr++) {
+        si.initSubstringIterator(*itr, 2, 7);
+		// substrings
+        while (si.hasNext()) {
+            string pt_password = si.nextSubstring();
+            // Salt len
+            for(vector<int>::iterator salt = saltLengths.begin(); salt != saltLengths.end(); salt++) {
+                vector<string> saltVec = generateSalts(alphanumeric, *salt);
+                // salts
+                for(vector<string>::iterator currSalt = saltVec.begin(); currSalt != saltVec.end(); currSalt++) {
+                    // pivots
+                    for(vector<int>::iterator piv = pivots.begin(); piv != pivots.end(); piv++) {
+                        if((unsigned)*piv <= currSalt->length()) {
+                            string salted = applySalt(pt_password, *currSalt, *salt, *piv);
+                            string hashed = applyHash(salted); 
+
+                            // Check hash match against local db
+							if (act_hashes.count(hashed) > 0) {
+                            	cout << hashed << " " << pt_password << " " << salted << " " << *currSalt << " userid: " << act_hashes[hashed] << '\n';
+							}
+
+							// Send hash match against other db
+
+							// Recv hash match against local db
+                        }
+                    }
+                }
+            }
+        }   
+    }
 
 	if (mpi_myrank == 0) {
 		hash_match hm;
@@ -330,3 +372,33 @@ void recv_msg(hash_match &hm, int s_rank) {
 	MPI_Irecv(&hm, 1, mpi_hash_match, 0, 0, MPI_COMM_WORLD, &req1);
 	MPI_Wait(&req1, &status1);
 }
+
+// void mpi_write_db(char *filename, int **uni, int rows, int cols, int rank) {
+//     MPI_Status status;
+//     MPI_File fh;
+//     MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
+
+//     for (int i = 0; i < rows; i++) {
+//         int global_row_ind = i + (rank * (rows));
+//         int offset = (global_row_ind * cols * 4);
+//         // printf("Rank %d writing row %d with offset %d.\n", rank, i, offset);
+//         MPI_File_write_at(fh, offset, uni[i], cols, MPI_INT, &status);
+//     }
+
+//     MPI_File_close(&fh);
+// }
+
+// void mpi_read_db(char *filename, int **uni, int rows int rank) {
+//     MPI_Status status;
+//     MPI_File fh;
+//     MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
+
+//     for (int i = 0; i < rows; i++) {
+//         int global_row_ind = i + (rank * (rows));
+//         int offset = (global_row_ind * cols * 4);
+//         // printf("Rank %d writing row %d with offset %d.\n", rank, i, offset);
+//         MPI_File_write_at(fh, offset, uni[i], cols, MPI_INT, &status);
+//     }
+
+//     MPI_File_close(&fh);
+// }

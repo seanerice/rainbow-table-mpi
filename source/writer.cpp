@@ -49,6 +49,29 @@ using namespace std;
 /* Global Vars *************************************************************/
 /***************************************************************************/
 
+vector<char> alphanumeric = {
+	'a', 'b', 'c', 'd', 'e', 'f',
+	'g', 'h', 'i', 'j', 'k', 'l', 
+	'm', 'n', 'o', 'p', 'q', 'r',
+	's', 't', 'u', 'v', 'w', 'x', 
+	'y', 'z', '0', '1', '2', '3',
+	'4', '5', '6', '7', '8', '9'
+};
+
+vector<string> words = {
+	"addition", "reflective", "torpid", "dust", "superb",
+	"substance", "need", "share", "dear", "opposite",
+	"credit", "vessel", "fuzzy", "puzzling", "race",
+	"plastic", "summer", "war", "unpack", "level",
+	"collar", "point", "volcano", "nonstop", "coal",
+	"name", "request", "greasy", "adventurous", "nonchalant",
+	"noise", "switch", "yell", "income", "songs",
+	"beg", "cannon", "bathe", "ratty", "nimble",
+	"morning", "scrape", "offer", "steep", "jar",
+	"travel", "signal", "number", "tap", "scared"
+};
+
+
 double g_time_in_secs = 0;
 double g_processor_frequency = 1600000000.0; // processing speed for BG/Q
 unsigned long long g_start_cycles = 0;
@@ -58,59 +81,6 @@ int last_user_id = 0;
 int mpi_myrank;
 int mpi_ranks;
 MPI_Datatype mpi_acct_row;
-vector<char> alphanumeric = {'a', 'b', 'c', '1', '2', '3'};
-vector<string> words = {
-	"addition",
-	"reflective",
-	"torpid",
-	"dust",
-	"superb",
-	"substance",
-	"need",
-	"share",
-	"dear",
-	"opposite",
-	"credit",
-	"vessel",
-	"fuzzy",
-	"puzzling",
-	"race",
-	"plastic",
-	"summer",
-	"war",
-	"unpack",
-	"level",
-	"collar",
-	"point",
-	"volcano",
-	"nonstop",
-	"coal",
-	"name",
-	"request",
-	"greasy",
-	"adventurous",
-	"nonchalant",
-	"noise",
-	"switch",
-	"yell",
-	"income",
-	"songs",
-	"beg",
-	"cannon",
-	"bathe",
-	"ratty",
-	"nimble",
-	"morning",
-	"offer",
-	"scrape",
-	"steep",
-	"jar",
-	"travel",
-	"signal",
-	"number",
-	"tap",
-	"scared"
-};
 
 struct acct_row {
 	int user_id;

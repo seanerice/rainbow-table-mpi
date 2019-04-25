@@ -2,8 +2,7 @@
 #include <ostream>
 #include <vector>
 #include "source/prod.h"
-#include "cryptopp/cryptlib.h"
-#include "cryptopp/sha.h"
+#include "picosha2.h"
 
 // returns a list of all possible salts.
 vector<string> generateSalts(vector<char> charList, int saltLength) {
@@ -34,13 +33,6 @@ vector<string> applySalts(vector<string> words, vector<string> salts, int saltLe
     return saltedPasswords;
 }
 
-vector<CryptoPP::SHA256> applyHash(vector<string> salted) {
-    vector<CryptoPP::SHA256> hashedPasswords = {};
-	for (vector<string>::iterator itr = salted.begin(); itr != salted.end(); itr++) {
-        CryptoPP::SHA256 hashedPassword;
-        unsigned char const* data = (unsigned char *) itr->data();
-        hashedPassword.Update(data, itr->size());
-        hashedPasswords.push_back(hashedPassword);
-    }
-    return hashedPasswords;
+string applyHash(string salted) {
+    return picosha2::hash256_hex_string(salted);
 }

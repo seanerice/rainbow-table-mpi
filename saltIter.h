@@ -34,10 +34,13 @@ vector<string> applySalts(vector<string> words, vector<string> salts, int saltLe
     return saltedPasswords;
 }
 
-/*vector<CryptoPP::SHA256> applyHash(vector<string> salted) {
+vector<CryptoPP::SHA256> applyHash(vector<string> salted) {
     vector<CryptoPP::SHA256> hashedPasswords = {};
 	for (vector<string>::iterator itr = salted.begin(); itr != salted.end(); itr++) {
         CryptoPP::SHA256 hashedPassword;
-        hashedPassword.Update((const byte *) itr->data(), itr->size());
-    return;
-}*/
+        unsigned char const* data = (unsigned char *) itr->data();
+        hashedPassword.Update(data, itr->size());
+        hashedPasswords.push_back(hashedPassword);
+    }
+    return hashedPasswords;
+}

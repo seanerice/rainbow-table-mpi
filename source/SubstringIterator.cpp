@@ -8,7 +8,8 @@ void SubstringIterator::initSubstringIterator(string str, int min_length, int ma
     this->str = str;
     this->min_length = min_length;
     this->max_length = max_length;
-    stop = str.length() - min_length;
+    str_length = str.length();
+    stop = str_length - min_length;
     from = 0;
     to = min_length - 1; // will be incremented in nextSubstring()
     hasNextVal = true;
@@ -20,7 +21,7 @@ void SubstringIterator::initSubstringIterator(string str) {
 
 string SubstringIterator::nextSubstring() {
     if (from < stop) {
-        if (to < max_length) {
+        if (to < max_length && to < str_length - from) {
             to++;
         } else {
             to = min_length;

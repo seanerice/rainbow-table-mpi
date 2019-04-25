@@ -103,6 +103,7 @@ private:
     int stop;
     int from;
     int to;
+    int str_length;
     int min_length;
     int max_length;
     bool hasNextVal;

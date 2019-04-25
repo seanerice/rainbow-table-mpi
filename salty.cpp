@@ -1,8 +1,4 @@
-#include <iostream>
-#include <ostream>
-#include <vector>
-#include "source/prod.h"
-#include "picosha2.h"
+#include "salty.h"
 
 // returns a list of all possible salts.
 vector<string> generateSalts(vector<char> charList, int saltLength) {

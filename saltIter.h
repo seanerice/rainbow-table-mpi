@@ -2,6 +2,8 @@
 #include <ostream>
 #include <vector>
 #include "source/prod.h"
+#include "cryptopp/cryptlib.h"
+#include "cryptopp/sha.h"
 
 // returns a list of all possible salts.
 vector<string> generateSalts(vector<char> charList, int saltLength) {
@@ -27,8 +29,15 @@ vector<string> applySalts(vector<string> words, vector<string> salts, int saltLe
 		for(vector<string>::iterator itr2 = salts.begin(); itr2 != salts.end(); itr2++) {
 			string saltedPassword = itr2->substr(0,pivot) + *itr + itr2->substr(pivot,saltLength);
 			saltedPasswords.push_back(saltedPassword);
-			cout << saltedPassword << '\n';
 		}
 	}
     return saltedPasswords;
 }
+
+/*vector<CryptoPP::SHA256> applyHash(vector<string> salted) {
+    vector<CryptoPP::SHA256> hashedPasswords = {};
+	for (vector<string>::iterator itr = salted.begin(); itr != salted.end(); itr++) {
+        CryptoPP::SHA256 hashedPassword;
+        hashedPassword.Update((const byte *) itr->data(), itr->size());
+    return;
+}*/

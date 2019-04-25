@@ -4,9 +4,6 @@
 #include "source/prod.h"
 #include "picosha2.h"
 
-class salty {
-    public:
-    vector<string> generateSalts(vector<char> charList, int saltLength);
-    vector<string> applySalts(vector<string> words, vector<string> salts, int saltLength, int pivot);
-    string applyHash(string salted); 
-};
+vector<string> generateSalts(vector<char> charList, int saltLength);
+string applySalt(string word, string salt, int saltLength, int pivot);
+string applyHash(string salted);

@@ -17,18 +17,12 @@ vector<string> generateSalts(vector<char> charList, int saltLength) {
 }
 
 // concatenates salts to strings according to provided pivot
-vector<string> applySalts(vector<string> words, vector<string> salts, int saltLength, int pivot) {
-	if (saltLength == 0) return words;
-	vector<string> saltedPasswords = {};
-	for (vector<string>::iterator itr = words.begin(); itr != words.end(); itr++) {
-		for(vector<string>::iterator itr2 = salts.begin(); itr2 != salts.end(); itr2++) {
-			string saltedPassword = itr2->substr(0,pivot) + *itr + itr2->substr(pivot,saltLength);
-			saltedPasswords.push_back(saltedPassword);
-		}
-	}
-    return saltedPasswords;
+string applySalt(string word, string salt, int saltLength, int pivot) {
+    string saltedPassword = salt.substr(0,pivot) + word + salt.substr(pivot,salt.length());
+    return saltedPassword;
 }
 
 string applyHash(string salted) {
-    return picosha2::hash256_hex_string(salted);
+    string hashedPassword = picosha2::hash256_hex_string(salted);
+    return hashedPassword;
 }

@@ -5,6 +5,12 @@ vector<string> generateSalts(vector<char> charList, int saltLength) {
     // create all random alphanumeric combinations of letters of salt length
     vector<vector<char>> saltProds = prod(charList, saltLength);
     vector<string> salts = {};
+
+    if (saltLength <= 0) {
+        salts.push_back("");
+        return salts;
+    }
+
 	// convert cartesian set of characters into strings
     for (vector<vector<char>>::iterator itr = saltProds.begin(); itr != saltProds.end(); itr++) {
 		string salt = "";

@@ -21,7 +21,6 @@ void PwdHashIter::initPwdHashIter(vector <string> words, vector<char> alphanumer
 }
 
 hash_pwd PwdHashIter::nextPwdHash() {
-    hash_pwd ret;
     string word = *itr;
     if ((unsigned) *piv > currSalt->length()) {
         currSalt++;

@@ -23,6 +23,8 @@ template<typename T, typename A>
 vector<vector<T>> prod(vector<T, A> c, int n) {
     // Initialize out
     vector<vector<T>> out;
+    if (n <= 0) return out;
+
     for (typename vector<T>::iterator itr = c.begin(); itr != c.end(); itr++) {
         vector<T> tmp;
         tmp.push_back(*itr);

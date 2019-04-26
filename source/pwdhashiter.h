@@ -96,6 +96,7 @@ private:
     string substring;
     string salted;
     string hashed;
+    hash_pwd ret;
 };
 
 #endif /* LIB_PWDHASHITER_H_ */

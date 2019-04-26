@@ -122,19 +122,19 @@ int main(int argc, char *argv[]) {
 		map<string, int> act_hashes;
 		init_act_hashes(act_hashes);
 
-		vector<acct_row> db_rows = gen_rows(words, 500, 3, 1);
-		acct_row rows[500];
+		vector<acct_row> db_rows = gen_rows(words, 512, 0, 0);
+		acct_row rows[512];
 		int i = 0;
 		for (vector<acct_row>::iterator itr = db_rows.begin(); itr != db_rows.end(); itr++) {
 			rows[i] = *itr;
 			i++;
 		}
 
-		mpi_write_db("db.txt", rows, 500, 0);
+		mpi_write_db("/home/parallel/spring-2019/rices/final/db.txt", rows, 512, 0);
 
-		acct_row file_rows[500];
+		acct_row file_rows[512];
 		print_acct_row(file_rows[0]);
-		mpi_read_db("db.txt", file_rows, 500, 0);
+		mpi_read_db("/home/parallel/spring-2019/rices/final/db.txt", file_rows, 512, 0);
 		print_acct_row(file_rows[0]);
 	}
 
@@ -189,12 +189,6 @@ vector<acct_row> gen_rows(vector<string> words, int num, int salt_len, int pivot
 	vector<acct_row> rows;
 
 	for (int n = 0; n < num; n++){
-		// Generate random salt
-		int s = rand() % salts.size();
-		string salt = "";
-		for (vector<char>::iterator itr = salts[s].begin(); itr != salts[s].end(); itr++) {
-			salt += *itr;
-		}
 
 		// Pick random word
 		int w = rand() % words.size();
@@ -205,6 +199,15 @@ vector<acct_row> gen_rows(vector<string> words, int num, int salt_len, int pivot
 		int w_start = 0;
 		if (word.size() - len > 0) {
 			w_start = rand() % (word.size() - len);
+		}
+
+		// Generate random salt
+		string salt = "";
+		if (salt_len > 0) {
+			int s = rand() % salts.size();
+			for (vector<char>::iterator itr = salts[s].begin(); itr != salts[s].end(); itr++) {
+				salt += *itr;
+			}
 		}
 
 		// Salt and hash password

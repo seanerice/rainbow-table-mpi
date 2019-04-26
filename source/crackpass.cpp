@@ -28,9 +28,7 @@
 #include <iostream> 
 #include <iterator> 
 #include <vector>
-#include "salty.h"
-#include "SubstringIterator.h"
-
+#include "pwdhashiter.h"
 
 #include<mpi.h>
 
@@ -72,6 +70,9 @@ vector<string> words = {
 	"beg", "cannon", "bathe", "ratty", "nimble",
 	"morning", "scrape", "offer", "steep", "jar",
 	"travel", "signal", "number", "tap", "scared"
+	"fearless", "sound", "heartbreaking", "gate", "cub",
+	"cave", "cannon", "pigs", "writer", "sign", "zip", 
+	"base", "overjoyed", "abortive"
 };
 
 
@@ -137,11 +138,12 @@ void mpi_read_db(const char *filename, acct_row *db_rows, int rows, int rank);
 void init_acct_row_type();
 void print_acct_row(acct_row &hm);
 
-void init_act_hashes(map<string, int> &act_hashes) {
-	act_hashes.insert(pair<string, int>("77ecb9c86001b69287f0fc210869d4db3c013067230a87f6fbf96adf65cc4030", 1));
-	act_hashes.insert(pair<string, int>("a1b48c37ac21232a6ef80baae25e080309c6b64330722bc06d61d9045045a37b", 2));
-	act_hashes.insert(pair<string, int>("ef6d4e20906b5aa18241941b23ff3e95ba7dda12758667db93c3f4e3b6410e8c", 3));
-	act_hashes.insert(pair<string, int>("e2e191cc90b5e4805e7137941a7b227779d3e11213b554af2d96055fe4b27f4d", 4));
+void init_act_hashes(map<string, int> &act_hashes, acct_row *acct_rows, int rows) {
+	for (int i = 0; i < rows; i++) {
+		if (act_hashes.count(acct_rows[i].hashed_pwd) <= 0) {
+			act_hashes.insert(pair<string, int>(acct_rows[i].hashed_pwd, acct_rows[i].user_id));	
+		}
+	}
 }
 
 void init_hash_match_type() {
@@ -193,111 +195,72 @@ int main(int argc, char *argv[]) {
 	// Read portion of database table into memory
 	int rows_per_rank = total_rows / mpi_ranks;
 	acct_row file_rows[rows_per_rank];
-	mpi_read_db("db.txt", file_rows, rows_per_rank, mpi_myrank);
-	print_acct_row(file_rows[0]); // Sanity check
+	g_start_cycles = GetTimeBase();
+	mpi_read_db("/home/parallel/spring-2019/rices/final/db.txt", file_rows, rows_per_rank, mpi_myrank);
+	g_end_cycles = GetTimeBase();
+	if (mpi_myrank == 0) {
+		g_time_in_secs = (g_end_cycles - g_start_cycles);
+	}
 
 	// Create lookup table mapping hash -> userid
 	map<string, int> act_hashes;
-	init_act_hashes(act_hashes);
+	init_act_hashes(act_hashes, file_rows, rows_per_rank);
+
+	int words_per_rank = words.size() / mpi_ranks;
+	vector<string>::const_iterator first = words.begin() + (words_per_rank * mpi_myrank);
+	vector<string>::const_iterator last = words.begin() + (words_per_rank * mpi_myrank + words_per_rank);
+	vector<string> local_words(first, last);
+
 
 	hash_match rank_match_buf_out[mpi_ranks];
 	hash_match rank_match_buf_in[mpi_ranks];
 
-	SubstringIterator si("hashes");
-	for (int t = 0; t < 10; t++) {
-
-
-		// Check for hash-match all in buff_in
-
-		// Generate new hash
-		string hashed_pwd = si.nextSubstring();
-
-		// Copy buff_in to buff_out
+	PwdHashIter phi(local_words, alphanumeric, pivots, saltLengths, 2, 7);
+	g_start_cycles = GetTimeBase();
+	for (int t = 0; t < 50000; t++) {
+		// Forward (copy) buff_in to buff_out
 		for (int i = 0; i < mpi_ranks; i++) {
 			rank_match_buf_out[i] = rank_match_buf_in[i];
 		}
 
-		// Make new hash match in buff_out for this rank
-		hash_match hm;
-		strcpy(hm.hashed_pwd, hashed_pwd.c_str());
-		rank_match_buf_out[mpi_myrank] = hm;
+		if (phi.hasNext()) {
+			// Generate a new hash_match
+			hash_pwd h = phi.nextPwdHash();
+			// cout << "Rank " << mpi_myrank << " Hash: " << h.hashed_pwd << " Plain: " << h.plain_pwd << " Salted: " << h.salted_pwd << endl;
 
-		if (mpi_myrank == 0) 
-			printf("Rank: %d, row: %d, hash: %s\n", mpi_myrank, rank_match_buf_out[0].userid, rank_match_buf_out[0].hashed_pwd);
+			hash_match hm;
+			hm.send_rank = mpi_myrank;
+			strcpy(hm.hashed_pwd, h.hashed_pwd.c_str());
+			strcpy(hm.plain_pwd, h.plain_pwd.c_str());
+
+			// Overwrite curr-rank's old hash_match with new hash_match
+			rank_match_buf_out[mpi_myrank] = hm;
+		}
+
+
+		// if (mpi_myrank == 0) 
+		// 	printf("Rank: %d, hash: %s, pwd: %s\n", mpi_myrank, rank_match_buf_out[0].hashed_pwd, rank_match_buf_out[0].plain_pwd);
 
 		// Sync buffer
-		// printf("Rank %d send to rank %d\n", mpi_myrank, mod(mpi_myrank + 1, mpi_ranks));
 		send_hash_matches(rank_match_buf_out, mpi_ranks, mod(mpi_myrank + 1, mpi_ranks));
 		recv_hash_matches(rank_match_buf_in, mpi_ranks, mod(mpi_myrank - 1, mpi_ranks));
-		MPI_Barrier(MPI_COMM_WORLD);
 
-		if (mpi_myrank == 1)
-			printf("Rank: %d, row: %d, hash: %s\n", mpi_myrank, rank_match_buf_in[0].userid, rank_match_buf_in[0].hashed_pwd);
-
+		// Check for hash matches
+		for (int i = 0; i < mpi_ranks; i++) {
+			hash_match r_hm = rank_match_buf_in[i];
+			string hash(r_hm.hashed_pwd);
+			if (r_hm.matched == 0 && act_hashes.count(hash) > 0) {
+				// We have a collision!!!
+				r_hm.userid = act_hashes[hash];
+				r_hm.matched = 1;
+				printf("Collision! Rank: %d, \thash: %s, \tpt: %s, \tuserid: %d\n", mpi_myrank, hash.c_str(), r_hm.plain_pwd, r_hm.userid);
+			}
+		}
 	}
-	
-    /* Primary execution:
-	*   for word in words:
-	*		for substrings of word
-	*       	for salt-len in salt-lens
-	*           	for salt in salts:
-	*					for pivot in pivots
-	*						make password
-	*						salt password
-	*						hash password
-	*               		check hash match
-	*/
-
-    // SubstringIterator si;
-	// // words
-    // for (vector<string>::iterator itr = words.begin(); itr != words.end(); itr++) {
-    //     si.initSubstringIterator(*itr, 2, 7);
-	// 	// substrings
-    //     while (si.hasNext()) {
-    //         string pt_password = si.nextSubstring();
-    //         // Salt len
-    //         for(vector<int>::iterator salt = saltLengths.begin(); salt != saltLengths.end(); salt++) {
-    //             vector<string> saltVec = generateSalts(alphanumeric, *salt);
-    //             // salts
-    //             for(vector<string>::iterator currSalt = saltVec.begin(); currSalt != saltVec.end(); currSalt++) {
-    //                 // pivots
-    //                 for(vector<int>::iterator piv = pivots.begin(); piv != pivots.end(); piv++) {
-    //                     if((unsigned)*piv <= currSalt->length()) {
-    //                         string salted = applySalt(pt_password, *currSalt, *salt, *piv);
-    //                         string hashed = applyHash(salted); 
-
-
-    //                         // Check hash match against local db
-	// 						if (act_hashes.count(hashed) > 0) {
-    //                         	cout << hashed << " " << pt_password << " " << salted << " " << *currSalt << " userid: " << act_hashes[hashed] << '\n';
-	// 						}
-
-	// 						// Send hash match against other db
-
-	// 						// Recv hash match against local db
-	// 						// then fwd
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }   
-    // }
-
-	// if (mpi_myrank == 0) {
-	// 	hash_match hm;
-	// 	hm.send_rank = 0;
-	// 	hm.matched = 0;
-	// 	strcpy(hm.hashed_pwd, "abcd");
-	// 	strcpy(hm.plain_pwd, "hey");
-	// 	hm.userid = -1;
-	// 	send_msg(hm, 1);
-	// }
-	// if (mpi_myrank == 1) {
-	// 	hash_match hm;
-	// 	recv_msg(hm, 0);
-	// 	cout << "Rank " << mpi_myrank << " recieved!" << endl;
-	// 	print_hash_match(hm);
-	// }
+	g_end_cycles = GetTimeBase();
+	if (mpi_myrank == 0) {
+		g_time_in_secs = (g_end_cycles - g_start_cycles);
+	}
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	MPI_Finalize();
